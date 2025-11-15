@@ -1,10 +1,9 @@
-// FINAL STABLE VERSION —
-// Neon sphere + wave + magnet + color themes + dark gradient background
-// + MICROPHONE AUDIO REACTIVITY
+// FINAL — Neon Sphere + Wave + Magnet + Color Themes + Dark Gradient
+// + Audio Reactive + User Click Activation (mic unlock)
 
 let t = 0;
 let points = [];
-let mic; // 🔊 마이크 입력
+let mic; // mic input
 
 const DOT_COUNT = 5200;
 const BASE_SIZE = 0.7;
@@ -12,7 +11,9 @@ const MAX_EXTRA_SIZE = 1.0;
 
 let lightDir = { x: 0.35, y: 0.8, z: 0.5 };
 let currentTheme = "orange";
+let audioActive = false;
 
+// Utils
 function mapValue(n, a, b, c, d) {
   return c + ((n - a) / (b - a)) * (d - c);
 }
@@ -29,17 +30,17 @@ function setup() {
   noStroke();
   pixelDensity(2);
 
-  // 🔊 마이크 시작
+  // Mic
   mic = new p5.AudioIn();
-  mic.start();
-
-  // Normalize light vector
+  mic.start(); // may be blocked initially
+ 
+  // Light vector normalize
   let L = Math.sqrt(lightDir.x**2 + lightDir.y**2 + lightDir.z**2) || 1;
   lightDir.x /= L;
   lightDir.y /= L;
   lightDir.z /= L;
 
-  // Uniform sphere distribution (Golden angle)
+  // Golden angle sphere distribution
   const ga = Math.PI * (3 - Math.sqrt(5));
   for (let i = 0; i < DOT_COUNT; i++) {
     let y = 1 - (i / (DOT_COUNT - 1)) * 2;
@@ -57,17 +58,31 @@ function setup() {
   }
 }
 
+//
+// 🔥 User MUST click to enable audio
+//
+function mousePressed() {
+  let audioCtx = getAudioContext();
+  if (audioCtx.state !== "running") {
+    audioCtx.resume();   // unlock
+    mic.start();
+    audioActive = true;
+  }
+
+  // Hide overlay UI if exists
+  let el = document.getElementById("mic-start");
+  if (el) el.style.display = "none";
+}
+
 function draw() {
   drawBackground();
 
-  // 🔊 음성 입력 → 0.0~1.0
-  let micLevel = mic.getLevel();
-  let audioEnergy = micLevel * 3.5;  // 반응 강도
-  audioEnergy = clamp(audioEnergy, 0, 1);
+  // mic level
+  let micLevel = audioActive ? mic.getLevel() : 0.0;
+  let audioEnergy = clamp(micLevel * 3.5, 0, 1);
 
   let R = Math.min(width, height) * 0.4;
 
-  // camera motion
   let angleY = t * 0.22;
   let angleX = -Math.PI/7 + Math.sin(t*0.12)*0.05;
 
@@ -75,7 +90,7 @@ function draw() {
   let cy = height * 0.55;
   translate(cx, cy);
 
-  // 🔊 전체 펄스도 음성 반응
+  // Audio reactive global pulse
   let globalPulse =
     1 + 0.05 * Math.sin(t*0.9) + audioEnergy * 0.35;
 
@@ -85,29 +100,25 @@ function draw() {
 
   for (let p of points) {
 
-    // ---------------------------
-    // 1) Wave Motion (음성 영향 포함)
-    // ---------------------------
+    // --- Wave motion with audio
     let lat0 = p.baseLat;
     let lon0 = p.baseLon;
     let wt = t;
 
-    let waveBase = 1 + audioEnergy * 1.3;
+    let waveBoost = 1 + audioEnergy * 1.3;
 
     let wLat =
-      (0.18 * waveBase) * Math.sin(lon0*3 + wt*1.2) +
-      (0.06 * waveBase) * Math.sin(lat0*6 - wt*1.8);
+      (0.18 * waveBoost) * Math.sin(lon0*3 + wt*1.2) +
+      (0.06 * waveBoost) * Math.sin(lat0*6 - wt*1.8);
 
     let wLon =
-      (0.16 * waveBase) * Math.sin(lat0*2.4 - wt*1.0) +
-      (0.05 * waveBase) * Math.sin(lon0*5 + wt*2.1);
+      (0.16 * waveBoost) * Math.sin(lat0*2.4 - wt*1) +
+      (0.05 * waveBoost) * Math.sin(lon0*5 + wt*2.1);
 
     let lat = lat0 + wLat;
     let lon = lon0 + wLon;
 
-    // ---------------------------
-    // 2) 3D position
-    // ---------------------------
+    // lat/lon → unit vector
     let yN = Math.sin(lat);
     let rN = Math.cos(lat);
     let xN = rN * Math.cos(lon);
@@ -120,18 +131,14 @@ function draw() {
     let y = ny * R;
     let z = nz * R;
 
-    // ---------------------------
-    // 3) Camera rotation
-    // ---------------------------
+    // Rotation
     let x1 = x*Math.cos(angleY) + z*Math.sin(angleY);
     let z1 = -x*Math.sin(angleY) + z*Math.cos(angleY);
 
     let y1 = y*Math.cos(angleX) - z1*Math.sin(angleX);
     let z2 = y*Math.sin(angleX) + z1*Math.cos(angleX);
 
-    // ---------------------------
-    // 4) Magnet (mouse)
-    // ---------------------------
+    // Magnet
     let dx = x1 - mX;
     let dy = y1 - mY;
     let d2 = Math.sqrt(dx*dx + dy*dy);
@@ -142,7 +149,7 @@ function draw() {
       target = Math.pow(n, 1.5);
     }
 
-    // 🔊 bulge에도 마이크 반영
+    // bulge reacts to audio
     p.bulge += ((target + audioEnergy*0.25) - p.bulge)*0.18;
 
     let s = 1 + 0.28*p.bulge;
@@ -150,15 +157,14 @@ function draw() {
     y1 *= s;
     z2 *= s;
 
-    // ---------------------------
-    // 5) Depth & Rim & Shade
-    // ---------------------------
+    // Depth & Rim & Shade
     let depth = clamp(mapValue(z2, -R*1.4, R*1.2, 0.12, 1), 0, 1);
 
-    let rimVal = clamp(
-      mapValue(Math.sqrt(x1*x1 + y1*y1), R*0.93, R*1.05, 0, 1), 0, 1
+    let rimV = clamp(
+      mapValue(Math.sqrt(x1*x1 + y1*y1), R*0.93, R*1.05, 0, 1),
+      0, 1
     );
-    let rim = rimVal * rimVal;
+    let rim = rimV * rimV;
 
     let shade = Math.max(0, nx*lightDir.x + ny*lightDir.y + nz*lightDir.z);
     shade = shade ** 1.4;
@@ -168,23 +174,20 @@ function draw() {
       0, 1
     );
 
-    // ---------------------------
-    // 6) Dot size (mic 반응 포함)
-    // ---------------------------
+    // Dot size
     let dotSize =
       (BASE_SIZE +
        MAX_EXTRA_SIZE*depth*(0.35 + 0.65*shade)) *
       (1 + 0.25*(waveBright-0.5)) *
-      (1 + audioEnergy * 0.8) *       // 🔊 dot 확대
+      (1 + audioEnergy*0.8) *
       (1 + 0.04*Math.sin(t*1.8 + depth*3)) *
       globalPulse *
       (1 + rim*0.35);
 
-    // ---------------------------
-    // 7) Color
-    // ---------------------------
+    // Color
     let col = computeColor(
-      currentTheme, rim, shade, waveBright, p.bulge, depth, globalPulse, audioEnergy
+      currentTheme, rim, shade, waveBright, p.bulge, depth,
+      globalPulse, audioEnergy
     );
 
     fill(col.r, col.g, col.b, col.a);
@@ -199,7 +202,7 @@ function windowResized() {
 }
 
 //
-// DARK GRADIENT BACKGROUND
+// Dark gradient background
 //
 function drawBackground() {
   let steps = 40;
@@ -218,8 +221,8 @@ function drawBackground() {
     let g = lerp(c1.g, c2.g, mix);
     let b = lerp(c1.b, c2.b, mix);
 
-    fill(r, g, b);
     noStroke();
+    fill(r, g, b);
     rect(0, y, width, height/steps + 2);
   }
 
@@ -227,7 +230,7 @@ function drawBackground() {
 }
 
 //
-// COLOR ENGINE (음성 반응 포함)
+// Color engine with audio reactivity
 //
 function computeColor(theme, rim, shade, waveB, bulge, depth, pulse, audioEnergy) {
   let baseR, baseG, baseB;
@@ -244,13 +247,12 @@ function computeColor(theme, rim, shade, waveB, bulge, depth, pulse, audioEnergy
     baseR = 255; baseG = 162; baseB = 57;
   }
 
-  // base neon energy
   let energy =
     0.45*rim +
     0.3*shade +
     0.2*waveB +
     0.25*bulge +
-    audioEnergy * 0.8;  // 🔊 마이크 반응 추가
+    audioEnergy * 0.8;
 
   let r = clamp(baseR + 140*energy, 0, 255);
   let g = clamp(baseG + 120*energy, 0, 255);
@@ -261,7 +263,7 @@ function computeColor(theme, rim, shade, waveB, bulge, depth, pulse, audioEnergy
     90*shade +
     75*waveB +
     70*bulge +
-    audioEnergy * 200;  // 🔊 소리날 때 빛 강해짐
+    audioEnergy * 200;
 
   let a =
     (160 + 300*depth + glow*2.4) *

@@ -356,9 +356,9 @@ function computeThemeColor(
     glowWave * waveBright +
     glowBulge * bulge;
 
-  let alpha =
+ let alpha =
     (alphaBase + alphaDepth * depth + glow * alphaGlowMul) *
-    (1.0 + 0.3 * globalPulse);
+    (1.0 + 0.15 * globalPulse);
 
   return { r: colR, g: colG, b: colB, a: alpha };
 }

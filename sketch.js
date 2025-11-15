@@ -58,9 +58,35 @@ function setup() {
   }
 }
 
-function draw() {
-  // 현재 활성 테마
-  let theme = currentTheme;
+// ========================
+// DARK GREY GRADIENT 배경
+// ========================
+function drawBackgroundGradient(theme) {
+  let steps = 40;
+
+  for (let i = 0; i < steps; i++) {
+    let p = i / (steps - 1);
+    let y = p * height;
+
+    // subtle wave motion (너무 과하지 않게)
+    let wobble = 0.02 * Math.sin(t * 0.2 + p * 4.0);
+    let mix = clamp(p + wobble, 0, 1);
+
+    // Dark Grey Gradient — 테마와 무관하게 고정
+    // top: #1b1b1c → bottom: #0e0e10 과 같은 톤
+    let c1 = { r: 27, g: 27, b: 28 };
+    let c2 = { r: 14, g: 14, b: 16 };
+
+    let rr = lerp(c1.r, c2.r, mix);
+    let gg = lerp(c1.g, c2.g, mix);
+    let bb = lerp(c1.b, c2.b, mix);
+
+    noStroke();
+    fill(rr, gg, bb);
+    rect(0, y, width, height / steps + 2);
+  }
+}
+
 blendMode(BLEND);   // 🔥 필수, 안 하면 구가 눌려서 안 보임
 
   // 테마별 부드러운 배경 그라디언트

@@ -61,6 +61,7 @@ function setup() {
 function draw() {
   // 현재 활성 테마
   let theme = currentTheme;
+blendMode(BLEND);   // 🔥 필수, 안 하면 구가 눌려서 안 보임
 
   // 테마별 부드러운 배경 그라디언트
   drawBackgroundGradient(theme);

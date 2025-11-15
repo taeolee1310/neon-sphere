@@ -86,7 +86,7 @@
   </style>
 </head>
 <body>
- <div id="mic-start"
+<div id="mic-start"
      style="
        position: fixed;
        inset: 0;
@@ -100,9 +100,26 @@
        color: white;
        z-index: 999999;
        cursor: pointer;
-     ">
+     "
+     onclick="enableMic()"
+>
   🔊 화면을 클릭하면 음성 반응이 활성화됩니다
 </div>
+
+<script>
+  function enableMic() {
+    const el = document.getElementById("mic-start");
+    if (el) el.style.display = "none";
+
+    if (typeof getAudioContext === "function") {
+      let ctx = getAudioContext();
+      if (ctx.state !== "running") {
+        ctx.resume();
+      }
+    }
+  }
+</script>
+
 
 
   <!-- 테마 스위치 패널 -->

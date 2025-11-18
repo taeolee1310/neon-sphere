@@ -2,155 +2,123 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <title>Neon Sphere</title>
+  <title>Neon Sphere – Enhanced Layout</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      overflow: hidden;
+      background: #0e0e10; /* 다크 그라데이션과 자연스럽게 어울리는 컬러 */
       height: 100%;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont,
-        "SF Pro Text", "Helvetica Neue", sans-serif;
-      background: #0e0e10;
-    }
-
-   <div id="canvas-wrapper"
-     style="margin:0 auto; max-width:1000px; height:auto; display:block;">
-</div>
-
-    }
-
-    .theme-panel {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      z-index: 10;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: 999px;
-      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
-      padding: 8px 10px;
       display: flex;
-      gap: 6px;
+      justify-content: center;
+      align-items: flex-start;
+      overflow-x: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+
+    /* 🔥 중앙에 캔버스를 담는 박스(브라우저에서 너무 크게 보이지 않도록 제한) */
+    #canvas-wrapper {
+      margin-top: 60px;
+      width: 100%;
+      max-width: 900px;   /* 데스크탑 기준 최대 크기 */
+      padding: 0 24px;
+      display: flex;
+      justify-content: center;
       align-items: center;
-      border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .theme-label {
-      font-size: 11px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #aaa;
-      margin-right: 4px;
-      padding-left: 4px;
+    canvas {
+      width: 100% !important;
+      height: auto !important;
+      display: block;
+      border-radius: 12px;
     }
 
-    .theme-btn {
-      border: none;
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 11px;
-      cursor: pointer;
-      background: transparent;
-      color: #ddd;
-      transition:
-        background 0.18s ease,
-        color 0.18s ease,
-        transform 0.12s ease;
-    }
-
-    .theme-btn:hover {
-      background: rgba(255, 255, 255, 0.12);
-      transform: translateY(-1px);
-    }
-
-    .theme-btn.active {
-      background: #ffffff;
-      color: #000000;
-    }
-
-    @media (max-width: 600px) {
-      .theme-panel {
-        top: 10px;
-        right: 10px;
-        padding: 6px 8px;
-      }
-      .theme-label {
-        display: none;
-      }
-      .theme-btn {
-        padding: 4px 8px;
-        font-size: 10px;
-      }
-    }
-
-    /* 마이크 안내 오버레이 */
     #mic-start {
       position: fixed;
       inset: 0;
       display: flex;
       justify-content: center;
       align-items: center;
-      background: rgba(0, 0, 0, 0.55);
+      background: rgba(0,0,0,0.55);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
-      font-size: 18px;
       color: white;
+      font-size: 18px;
       z-index: 999999;
       cursor: pointer;
       text-align: center;
-      padding: 0 24px;
-      line-height: 1.5;
+      padding: 0 30px;
+    }
+
+    .theme-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(8px);
+      border-radius: 999px;
+      padding: 8px 12px;
+      display: flex;
+      gap: 8px;
+      z-index: 50;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .theme-btn {
+      border: none;
+      background: transparent;
+      color: #ddd;
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .theme-btn.active {
+      background: #fff;
+      color: #000;
     }
   </style>
 </head>
+
 <body>
-  <!-- 🔊 마이크 활성화 오버레이 -->
-  <div id="mic-start" onclick="enableMic()">
-    🔊 화면을 클릭하면 음성 반응이 활성화됩니다
-  </div>
+  <!-- 🔊 마이크 안내 -->
+  <div id="mic-start" onclick="enableMic()">🔊 화면을 클릭하면 음성 반응이 활성화됩니다</div>
 
-  <!-- 🎨 테마 스위치 패널 -->
+  <!-- 🟣 중앙 캔버스 영역 -->
+  <div id="canvas-wrapper"></div>
+
+  <!-- 🎨 테마 선택 -->
   <div class="theme-panel">
-    <span class="theme-label">NEON THEME</span>
-    <button class="theme-btn active" data-theme="orange"
-      onclick="setTheme('orange', this)">Orange</button>
-    <button class="theme-btn" data-theme="blue"
-      onclick="setTheme('blue', this)">Blue</button>
-    <button class="theme-btn" data-theme="purple"
-      onclick="setTheme('purple', this)">Purple</button>
-    <button class="theme-btn" data-theme="green"
-      onclick="setTheme('green', this)">Green</button>
+    <button class="theme-btn active" onclick="setTheme('orange', this)">Orange</button>
+    <button class="theme-btn" onclick="setTheme('blue', this)">Blue</button>
+    <button class="theme-btn" onclick="setTheme('purple', this)">Purple</button>
+    <button class="theme-btn" onclick="setTheme('green', this)">Green</button>
   </div>
 
-  <!-- p5 + sound -->
+  <!-- p5.js + sound 추가 -->
   <script src="https://cdn.jsdelivr.net/npm/p5@1.5.0/lib/p5.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/p5@1.5.0/lib/addons/p5.sound.min.js"></script>
   <script src="sketch.js"></script>
 
   <script>
-    // 테마 버튼 핸들러
-    function setTheme(theme, btnEl) {
-      if (window.setNeonTheme) {
-        window.setNeonTheme(theme);
-      }
-      const buttons = document.querySelectorAll('.theme-btn');
-      buttons.forEach((b) => b.classList.remove('active'));
-      if (btnEl) btnEl.classList.add('active');
+    function setTheme(theme, el) {
+      if (window.setNeonTheme) window.setNeonTheme(theme);
+      document.querySelectorAll('.theme-btn')
+        .forEach(btn => btn.classList.remove('active'));
+      el.classList.add('active');
     }
 
-    // 마이크 활성화 (오버레이 클릭 시)
     function enableMic() {
-      const el = document.getElementById('mic-start');
-      if (el) el.style.display = 'none';
+      let el = document.getElementById("mic-start");
+      if (el) el.style.display = "none";
 
-      if (typeof getAudioContext === 'function') {
-        const ctx = getAudioContext();
-        if (ctx.state !== 'running') {
-          ctx.resume();
-        }
+      if (typeof getAudioContext === "function") {
+        let ctx = getAudioContext();
+        if (ctx.state !== "running") ctx.resume();
       }
 
       if (window.enableMicFromOutside) {

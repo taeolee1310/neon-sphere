@@ -36,9 +36,12 @@ window.enableMicFromOutside = function () {
 };
 
 function setup() {
-  createCanvas(windowWidth, windowHeight);
-  noStroke();
-  pixelDensity(2);
+  let w = min(windowWidth, 1000);
+  let h = min(windowHeight, 1000);
+  let cnv = createCanvas(w, h);
+  cnv.parent("canvas-wrapper");  // HTML에서 감싸는 div
+}
+
 
   // Light vector normalize
   let L =
